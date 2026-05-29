@@ -16,6 +16,9 @@ public class TrainingOperationServiceImpl implements TrainingOperationService {
     @Autowired
     private OperationLogMapper operationLogMapper;
 
+    @Autowired
+    private com.jxsn.service.DeepSeekService deepSeekService;
+
     @Override
     public Result submitOperation(TrainingOperationRequest request) {
         if (request.getSessionId() == null) {
@@ -38,7 +41,18 @@ public class TrainingOperationServiceImpl implements TrainingOperationService {
 
         boolean correct = checkParam(request.getParamName(), request.getParamValue());
 
-        String feedback = generateFeedback(request.getParamName(), request.getParamValue(), correct);
+        String localFeedback = generateFeedback(
+                request.getParamName(),
+                request.getParamValue(),
+                correct
+        );
+
+        String feedback = deepSeekService.generateTrainingAdvice(
+                request.getParamName(),
+                request.getParamValue(),
+                correct,
+                localFeedback
+        );
 
         OperationLog log = new OperationLog();
         log.setSessionId(request.getSessionId());
