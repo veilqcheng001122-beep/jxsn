@@ -105,7 +105,7 @@ const handleLogin = () => {
 <style scoped>
 .login-container {
   height: 100vh;
-  background: linear-gradient(135deg, #1f2d3d, #409eff);
+  background: linear-gradient(135deg, #1f2d3d, #fbfbfc);
   display: flex;
   justify-content: center;
   align-items: center;

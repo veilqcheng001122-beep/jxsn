@@ -19,9 +19,6 @@ public class InterventionServiceImpl implements InterventionService {
     @Autowired
     private TeacherInterventionMapper teacherInterventionMapper;
 
-    @Autowired
-    private OperationLogMapper operationLogMapper;
-
     @Override
     public Result sendIntervention(InterventionRequest request) {
         Long sessionId = request.getSessionId();
@@ -72,18 +69,7 @@ public class InterventionServiceImpl implements InterventionService {
         intervention.setInterventionTime(LocalDateTime.now());
 
         teacherInterventionMapper.insert(intervention);
-
-        // 2. 逐个修改学生操作参数
-        for (var item : request.getParamList()) {
-            updateOrInsertOperationLog(
-                    sessionId,
-                    item.getParamName(),
-                    item.getParamValue(),
-                    request.getGuidanceText()
-            );
-        }
-
-        return Result.success("远程干预已保存，多个学生参数与指导话语已更新");
+        return Result.success("教师干预建议已下发，等待学生查看并修正");
     }
 
     @Override
@@ -102,54 +88,5 @@ public class InterventionServiceImpl implements InterventionService {
     private boolean hasText(String value) {
         return value != null && !value.trim().isEmpty();
     }
-    private void updateOrInsertOperationLog(
-            Long sessionId,
-            String paramName,
-            String paramValue,
-            String guidanceText
-    ) {
-        QueryWrapper<OperationLog> wrapper = new QueryWrapper<>();
-        wrapper.eq("session_id", sessionId)
-                .likeRight("real_time_value", paramName + "=")
-                .orderByDesc("op_time")
-                .orderByDesc("log_id")
-                .last("LIMIT 1");
 
-        OperationLog targetLog = operationLogMapper.selectOne(wrapper);
-
-        if (targetLog != null) {
-            OperationLog updateLog = new OperationLog();
-            updateLog.setLogId(targetLog.getLogId());
-            updateLog.setRealTimeValue(paramName + "=" + paramValue);
-            updateLog.setIsCorrect(1);
-            updateLog.setAiFeedback(guidanceText);
-            updateLog.setOpTime(LocalDateTime.now());
-
-            operationLogMapper.updateById(updateLog);
-        } else {
-            OperationLog newLog = new OperationLog();
-            newLog.setSessionId(sessionId);
-            newLog.setStepIndex(getNextStepIndex(sessionId));
-            newLog.setRealTimeValue(paramName + "=" + paramValue);
-            newLog.setIsCorrect(1);
-            newLog.setAiFeedback(guidanceText);
-            newLog.setOpTime(LocalDateTime.now());
-
-            operationLogMapper.insert(newLog);
-        }
-    }
-    private Integer getNextStepIndex(Long sessionId) {
-        QueryWrapper<OperationLog> wrapper = new QueryWrapper<>();
-        wrapper.eq("session_id", sessionId)
-                .orderByDesc("step_index")
-                .last("LIMIT 1");
-
-        OperationLog latestLog = operationLogMapper.selectOne(wrapper);
-
-        if (latestLog == null || latestLog.getStepIndex() == null) {
-            return 1;
-        }
-
-        return latestLog.getStepIndex() + 1;
-    }
 }

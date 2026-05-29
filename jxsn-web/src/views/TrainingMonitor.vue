@@ -36,7 +36,7 @@
       </el-row>
     </el-card>
 
-    <el-form :inline="true" :model="queryForm" style="margin-bottom: 20px">
+    <el-form :inline="true" :model="queryForm" class="query-form">
       <el-form-item label="学生姓名">
         <el-input
           v-model="queryForm.studentName"
@@ -68,7 +68,7 @@
       </el-form-item>
 
       <el-form-item>
-        <el-button type="primary" @click="loadTrainingRecords">
+        <el-button type="primary" @click="loadTrainingRecords(true)">
           查询
         </el-button>
         <el-button @click="resetQuery">
@@ -79,7 +79,9 @@
 
     <el-card class="table-card">
       <template #header>
-        <span>学生实训记录</span>
+        <div class="card-header">
+          <span>学生实训记录</span>
+        </div>
       </template>
 
       <el-table
@@ -91,22 +93,29 @@
         <el-table-column prop="studentName" label="学生姓名" />
         <el-table-column prop="studentNo" label="学号" />
         <el-table-column prop="processName" label="当前工序" />
-        <el-table-column prop="progress" label="实训进度" />
 
-        <el-table-column label="状态">
+        <el-table-column label="实训进度" width="160">
           <template #default="{ row }">
-            <el-tag :type="row.status === '异常' ? 'danger' : 'success'">
-              {{ row.status }}
+            <el-progress
+              :percentage="Number(row.progress) || 0"
+              :stroke-width="10"
+            />
+          </template>
+        </el-table-column>
+
+        <el-table-column label="实训状态" width="110">
+          <template #default="{ row }">
+            <el-tag :type="row.status === '已完成' ? 'success' : 'primary'">
+              {{ row.status || '未知' }}
             </el-tag>
           </template>
         </el-table-column>
 
-        <el-table-column prop="warningCount" label="异常次数" />
-        <el-table-column prop="latestOperation" label="最新操作" />
-
-        <el-table-column label="更新时间" width="180">
+        <el-table-column label="异常状态" width="130">
           <template #default="{ row }">
-            {{ formatTime(row.updateTime) }}
+            <el-tag :type="getWarningTagType(row.warningStatus)">
+              {{ row.warningStatus || '暂无操作' }}
+            </el-tag>
           </template>
         </el-table-column>
 
@@ -115,7 +124,13 @@
             <el-button type="primary" link @click="viewDetail(row)">
               查看详情
             </el-button>
-            <el-button type="warning" link @click="openIntervene(row)">
+
+            <el-button
+              type="warning"
+              link
+              :disabled="row.warningStatus !== '异常待处理'"
+              @click="openIntervene(row)"
+            >
               远程干预
             </el-button>
           </template>
@@ -138,7 +153,7 @@
             <div
               v-for="(item, index) in interveneForm.paramList"
               :key="index"
-              style="display: flex; gap: 10px; margin-bottom: 10px"
+              class="param-row"
             >
               <el-select
                 v-model="item.paramName"
@@ -232,6 +247,7 @@ const interveneDialogVisible = ref(false)
 
 const interveneForm = reactive({
   recordId: '',
+  sessionId: '',
   studentName: '',
   paramList: [
     {
@@ -267,8 +283,10 @@ const loadMonitorData = async () => {
   }
 }
 
-const loadTrainingRecords = async () => {
-  loading.value = true
+const loadTrainingRecords = async (showLoading = false) => {
+  if (showLoading) {
+    loading.value = true
+  }
 
   try {
     const data = await getTrainingRecords(buildQueryParams())
@@ -277,7 +295,9 @@ const loadTrainingRecords = async () => {
     console.error('加载实训记录失败：', error)
     tableData.value = []
   } finally {
-    loading.value = false
+    if (showLoading) {
+      loading.value = false
+    }
   }
 }
 
@@ -287,11 +307,27 @@ const resetQuery = () => {
   queryForm.processName = ''
   queryForm.timeRange = []
 
-  loadTrainingRecords()
+  loadTrainingRecords(true)
 }
 
 const viewDetail = row => {
-  router.push(`/training/detail/${row.recordId}`)
+  router.push(`/training/detail/${row.recordId || row.sessionId}`)
+}
+
+const getWarningTagType = status => {
+  if (status === '异常待处理') {
+    return 'danger'
+  }
+
+  if (status === '已纠正') {
+    return 'warning'
+  }
+
+  if (status === '正常') {
+    return 'success'
+  }
+
+  return 'info'
 }
 
 const addInterveneParam = () => {
@@ -306,7 +342,8 @@ const removeInterveneParam = index => {
 }
 
 const openIntervene = row => {
-  interveneForm.recordId = row.recordId
+  interveneForm.recordId = row.recordId || row.sessionId
+  interveneForm.sessionId = row.sessionId || row.recordId
   interveneForm.studentName = row.studentName
   interveneForm.paramList = [
     {
@@ -337,37 +374,30 @@ const submitIntervene = async () => {
   try {
     await sendIntervention({
       recordId: interveneForm.recordId,
-      sessionId: interveneForm.recordId,
+      sessionId: interveneForm.sessionId || interveneForm.recordId,
       studentName: interveneForm.studentName,
       paramList: interveneForm.paramList,
       guidanceText: interveneForm.guidanceText
     })
 
-    ElMessage.success('远程干预已下发，多个参数与指导话语已更新')
+    ElMessage.success('教师干预建议已下发')
     interveneDialogVisible.value = false
 
-    loadTrainingRecords()
+    loadMonitorData()
+    loadTrainingRecords(false)
   } catch (error) {
     console.error('下发远程干预失败：', error)
     ElMessage.error('远程干预下发失败，请检查后端接口')
   }
 }
 
-const formatTime = time => {
-  if (!time) return ''
-
-  return time
-    .replace('T', ' ')
-    .substring(0, 19)
-}
-
 onMounted(() => {
   loadMonitorData()
-  loadTrainingRecords()
+  loadTrainingRecords(true)
 
   pollIntervalId = setInterval(() => {
     loadMonitorData()
-    loadTrainingRecords()
+    loadTrainingRecords(false)
   }, 2000)
 })
 
@@ -388,8 +418,18 @@ onUnmounted(() => {
   margin-bottom: 16px;
 }
 
+.query-form {
+  margin-bottom: 20px;
+}
+
 .table-card {
   margin-top: 16px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .stat-title {
@@ -409,5 +449,11 @@ onUnmounted(() => {
 
 .success {
   color: #67c23a;
+}
+
+.param-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 </style>

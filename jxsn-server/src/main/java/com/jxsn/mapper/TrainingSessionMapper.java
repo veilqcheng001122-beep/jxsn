@@ -21,19 +21,36 @@ public interface TrainingSessionMapper extends BaseMapper<TrainingSession> {
             u.real_name AS studentName,
             u.username AS studentNo,
             c.process_name AS processName,
+
             CASE
                 WHEN s.session_status = '已完成' THEN 100
                 WHEN s.session_status = '进行中' THEN 65
                 ELSE 0
             END AS progress,
+
             s.session_status AS status,
+
             IFNULL(w.warningCount, 0) AS warningCount,
             IFNULL(l.latestOperation, '暂无操作记录') AS latestOperation,
+            l.latestIsCorrect AS latestIsCorrect,
+            l.latestAiFeedback AS latestAiFeedback,
+
+            CASE
+                WHEN l.latestIsCorrect = 0 THEN '异常待处理'
+                WHEN l.latestIsCorrect = 1 AND IFNULL(w.warningCount, 0) > 0 THEN '已纠正'
+                WHEN l.latestIsCorrect IS NULL THEN '暂无操作'
+                ELSE '正常'
+            END AS warningStatus,
+
+            ti.latestTeacherIntervention AS latestTeacherIntervention,
+
             IFNULL(l.updateTime, s.start_time) AS updateTime
+
         FROM training_session s
         LEFT JOIN sys_user u ON s.student_id = u.user_id
         LEFT JOIN scene_template t ON s.template_id = t.template_id
         LEFT JOIN craft_process_definition c ON t.process_id = c.process_id
+
         LEFT JOIN (
             SELECT
                 session_id,
@@ -42,16 +59,22 @@ public interface TrainingSessionMapper extends BaseMapper<TrainingSession> {
             WHERE is_correct = 0
             GROUP BY session_id
         ) w ON s.session_id = w.session_id
+
         LEFT JOIN (
             SELECT
                 session_id,
                 real_time_value AS latestOperation,
+                is_correct AS latestIsCorrect,
+                ai_feedback AS latestAiFeedback,
                 op_time AS updateTime
             FROM (
                 SELECT
                     session_id,
                     real_time_value,
+                    is_correct,
+                    ai_feedback,
                     op_time,
+                    log_id,
                     ROW_NUMBER() OVER (
                         PARTITION BY session_id
                         ORDER BY op_time DESC, log_id DESC
@@ -60,6 +83,27 @@ public interface TrainingSessionMapper extends BaseMapper<TrainingSession> {
             ) temp
             WHERE rn = 1
         ) l ON s.session_id = l.session_id
+
+        LEFT JOIN (
+            SELECT
+                session_id,
+                intervention_action AS latestTeacherIntervention,
+                intervention_time
+            FROM (
+                SELECT
+                    session_id,
+                    intervention_action,
+                    intervention_time,
+                    intervention_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY session_id
+                        ORDER BY intervention_time DESC, intervention_id DESC
+                    ) AS rn
+                FROM teacher_intervention
+            ) temp
+            WHERE rn = 1
+        ) ti ON s.session_id = ti.session_id
+
         <where>
             <if test="studentName != null and studentName != ''">
                 AND u.real_name LIKE CONCAT('%', #{studentName}, '%')
@@ -77,6 +121,7 @@ public interface TrainingSessionMapper extends BaseMapper<TrainingSession> {
                 AND s.start_time &lt;= #{endTime}
             </if>
         </where>
+
         ORDER BY updateTime DESC
         </script>
         """)

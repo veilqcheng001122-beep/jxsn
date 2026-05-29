@@ -80,8 +80,8 @@ public class TrainingDetailServiceImpl implements TrainingDetailService {
                 finishedCount++;
             }
 
-            if (record.getWarningCount() != null) {
-                warningCount += record.getWarningCount();
+            if ("异常待处理".equals(record.getWarningStatus())) {
+                warningCount++;
             }
         }
 
