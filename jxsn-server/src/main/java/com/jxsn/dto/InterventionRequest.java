@@ -2,10 +2,11 @@ package com.jxsn.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class InterventionRequest {
 
-    // 前端现在传 recordId，这里先当作 sessionId 使用
     private Long recordId;
 
     private Long sessionId;
@@ -15,4 +16,10 @@ public class InterventionRequest {
     private String studentName;
 
     private String command;
+
+    private String guidanceText;
+
+    private Long logId;
+
+    private List<InterventionParamDTO> paramList;
 }

@@ -110,25 +110,71 @@
       </el-table>
     </el-card>
 
-    <el-dialog v-model="interveneDialogVisible" title="教师远程干预" width="500px">
-  <el-form :model="interveneForm" label-width="100px">
+<el-dialog v-model="interveneDialogVisible" title="教师远程干预" width="680px">
+  <el-form :model="interveneForm" label-width="120px">
     <el-form-item label="学生姓名">
       <el-input v-model="interveneForm.studentName" disabled />
     </el-form-item>
 
-    <el-form-item label="干预内容">
+    <el-form-item label="修正参数">
+      <div style="width: 100%">
+        <div
+          v-for="(item, index) in interveneForm.paramList"
+          :key="index"
+          style="display: flex; gap: 10px; margin-bottom: 10px"
+        >
+          <el-select
+            v-model="item.paramName"
+            placeholder="请选择参数"
+            style="width: 220px"
+          >
+            <el-option label="温度 temperature" value="temperature" />
+            <el-option label="湿度 humidity" value="humidity" />
+            <el-option label="压力 pressure" value="pressure" />
+            <el-option label="时长 duration" value="duration" />
+            <el-option label="微生物浓度 microbe" value="microbe" />
+            <el-option label="密封状态 seal_status" value="seal_status" />
+          </el-select>
+
+          <el-input
+            v-model="item.paramValue"
+            placeholder="修正值，例如：36、85、已密封"
+          />
+
+          <el-button
+            type="danger"
+            plain
+            @click="removeInterveneParam(index)"
+            :disabled="interveneForm.paramList.length === 1"
+          >
+            删除
+          </el-button>
+        </div>
+
+        <el-button type="primary" plain @click="addInterveneParam">
+          添加参数
+        </el-button>
+      </div>
+    </el-form-item>
+
+    <el-form-item label="指导话语">
       <el-input
-        v-model="interveneForm.command"
+        v-model="interveneForm.guidanceText"
         type="textarea"
         :rows="4"
-        placeholder="请输入干预建议，例如：请降低发酵温度"
+        placeholder="例如：当前参数存在偏差，请根据教师修正值重新确认设备状态后继续实训。"
       />
     </el-form-item>
   </el-form>
 
   <template #footer>
-    <el-button @click="interveneDialogVisible = false">取消</el-button>
-    <el-button type="primary" @click="submitIntervene">下发指令</el-button>
+    <el-button @click="interveneDialogVisible = false">
+      取消
+    </el-button>
+
+    <el-button type="primary" @click="submitIntervene">
+      下发干预
+    </el-button>
   </template>
 </el-dialog>
 
@@ -207,30 +253,67 @@ const interveneDialogVisible = ref(false)
 const interveneForm = reactive({
   recordId: '',
   studentName: '',
-  command: ''
+  paramList: [
+    {
+      paramName: '',
+      paramValue: ''
+    }
+  ],
+  guidanceText: ''
 })
 
-const openIntervene = (row) => {
+const addInterveneParam = () => {
+  interveneForm.paramList.push({
+    paramName: '',
+    paramValue: ''
+  })
+}
+
+const removeInterveneParam = index => {
+  interveneForm.paramList.splice(index, 1)
+}
+
+const openIntervene = row => {
   interveneForm.recordId = row.recordId
   interveneForm.studentName = row.studentName
-  interveneForm.command = ''
+  interveneForm.paramList = [
+    {
+      paramName: '',
+      paramValue: ''
+    }
+  ]
+  interveneForm.guidanceText = ''
+
   interveneDialogVisible.value = true
 }
 
 const submitIntervene = async () => {
-  if (!interveneForm.command) {
-    ElMessage.warning('请输入干预内容')
+  const invalidItem = interveneForm.paramList.find(item => {
+    return !item.paramName || !item.paramValue
+  })
+
+  if (invalidItem) {
+    ElMessage.warning('请完整填写所有修正参数')
+    return
+  }
+
+  if (!interveneForm.guidanceText) {
+    ElMessage.warning('请输入指导话语')
     return
   }
 
   await sendIntervention({
     recordId: interveneForm.recordId,
+    sessionId: interveneForm.recordId,
     studentName: interveneForm.studentName,
-    command: interveneForm.command
+    paramList: interveneForm.paramList,
+    guidanceText: interveneForm.guidanceText
   })
 
-  ElMessage.success('远程干预指令已下发')
+  ElMessage.success('远程干预已下发，多个参数与指导话语已更新')
   interveneDialogVisible.value = false
+
+  loadTrainingRecords()
 }
 
 const formatTime = time => {
