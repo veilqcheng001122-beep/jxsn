@@ -4,19 +4,34 @@
       <template #header>
         <div class="card-header">
           <span>我的实训操作</span>
-          <el-tag type="primary">学生端</el-tag>
+          <div class="header-tags">
+            <el-tag type="primary">学生端</el-tag>
+            <el-tag type="info">
+              {{ trainingContent.processName || '实训流程' }}
+            </el-tag>
+          </div>
         </div>
       </template>
 
+      <el-alert
+        v-if="usingFallbackContent"
+        title="当前使用临时实训流程"
+        description="后续队友提供实训内容接口后，本页面会自动切换为真实工序、步骤和参数配置。"
+        type="warning"
+        show-icon
+        :closable="false"
+        class="fallback-alert"
+      />
+
       <el-steps
-        :active="form.stepIndex - 1"
+        :active="currentStepActiveIndex"
         finish-status="success"
         align-center
       >
         <el-step
           v-for="step in trainingSteps"
           :key="step.stepIndex"
-          :title="step.title"
+          :title="step.stepName || step.title"
           :description="step.description"
         />
       </el-steps>
@@ -26,7 +41,9 @@
       <template #header>
         <div class="card-header">
           <span>实训参数提交</span>
-          <el-tag type="info">当前步骤：{{ currentStep?.title || '-' }}</el-tag>
+          <el-tag type="info">
+            当前步骤：{{ currentStep?.stepName || currentStep?.title || '-' }}
+          </el-tag>
         </div>
       </template>
 
@@ -48,7 +65,7 @@
             <el-option
               v-for="step in trainingSteps"
               :key="step.stepIndex"
-              :label="`${step.stepIndex}. ${step.title}`"
+              :label="`${step.stepIndex}. ${step.stepName || step.title}`"
               :value="step.stepIndex"
             />
           </el-select>
@@ -62,17 +79,17 @@
           >
             <el-option
               v-for="item in paramOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+              :key="item.paramName || item.value"
+              :label="getParamLabel(item)"
+              :value="item.paramName || item.value"
             />
           </el-select>
         </el-form-item>
 
         <el-form-item v-if="currentParamInfo" label="标准范围">
           <el-alert
-            :title="currentParamInfo.standard"
-            :description="currentParamInfo.description"
+            :title="getStandardText(currentParamInfo)"
+            :description="currentParamInfo.description || '暂无参数说明'"
             type="info"
             show-icon
             :closable="false"
@@ -116,13 +133,18 @@
         </el-descriptions-item>
 
         <el-descriptions-item label="判断结果">
-          <el-tag :type="Number(result.isCorrect) === 1 ? 'success' : 'danger'">
-            {{ Number(result.isCorrect) === 1 ? '合规' : '异常' }}
+          <el-tag :type="isCorrectValue(result.isCorrect) ? 'success' : 'danger'">
+            {{ isCorrectValue(result.isCorrect) ? '合规' : '异常' }}
           </el-tag>
         </el-descriptions-item>
 
         <el-descriptions-item label="AI指导建议" :span="2">
-          {{ result.aiFeedback }}
+          <el-alert
+            :title="result.aiFeedback || '暂无AI指导建议'"
+            :type="isCorrectValue(result.isCorrect) ? 'success' : 'warning'"
+            show-icon
+            :closable="false"
+          />
         </el-descriptions-item>
       </el-descriptions>
     </el-card>
@@ -150,6 +172,7 @@
           <div class="intervention-item">
             <div class="intervention-title">
               <el-tag type="warning">教师干预</el-tag>
+
               <el-tag
                 v-if="isInterventionRead(item)"
                 type="success"
@@ -157,6 +180,7 @@
               >
                 已查看
               </el-tag>
+
               <el-tag
                 v-else
                 type="danger"
@@ -175,7 +199,7 @@
               type="primary"
               size="small"
               plain
-              @click="markInterventionRead(item)"
+              @click="handleMarkInterventionRead(item)"
             >
               我已查看该建议
             </el-button>
@@ -191,7 +215,9 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElNotification } from 'element-plus'
 import {
   submitTrainingOperation,
-  getInterventionList
+  getInterventionList,
+  getTrainingContent,
+  markInterventionRead
 } from '@/api/training'
 
 let interventionTimer = null
@@ -200,6 +226,7 @@ const result = ref(null)
 const interventionList = ref([])
 const lastInterventionKey = ref('')
 const readInterventionKeys = ref([])
+const usingFallbackContent = ref(false)
 
 const form = reactive({
   sessionId: 1,
@@ -208,91 +235,198 @@ const form = reactive({
   paramValue: ''
 })
 
-const trainingSteps = [
-  {
-    stepIndex: 1,
-    title: '原料处理',
-    description: '称量、清洗、粉碎'
-  },
-  {
-    stepIndex: 2,
-    title: '蒸煮糊化',
-    description: '控制温度与时长'
-  },
-  {
-    stepIndex: 3,
-    title: '摊凉加曲',
-    description: '控制温度与接种条件'
-  },
-  {
-    stepIndex: 4,
-    title: '入池发酵',
-    description: '控制湿度、密封与微生物'
-  },
-  {
-    stepIndex: 5,
-    title: '蒸馏操作',
-    description: '控制压力与蒸馏状态'
-  },
-  {
-    stepIndex: 6,
-    title: '陈酿管理',
-    description: '记录时长与环境条件'
-  }
-]
+const defaultTrainingContent = {
+  processName: '临时实训流程',
+  steps: [
+    {
+      stepIndex: 1,
+      stepName: '原料处理',
+      description: '称量、清洗、粉碎',
+      params: [
+        {
+          paramName: 'temperature',
+          paramLabel: '温度',
+          label: '温度 temperature',
+          standardText: '标准范围：30℃ - 38℃',
+          description: '温度过高或过低都会影响实训效果。',
+          placeholder: '例如：36'
+        },
+        {
+          paramName: 'humidity',
+          paramLabel: '湿度',
+          label: '湿度 humidity',
+          standardText: '标准范围：60% - 85%',
+          description: '湿度异常可能影响环境稳定性。',
+          placeholder: '例如：75'
+        }
+      ]
+    },
+    {
+      stepIndex: 2,
+      stepName: '发酵控制',
+      description: '控制温湿度、密封状态和微生物环境',
+      params: [
+        {
+          paramName: 'temperature',
+          paramLabel: '温度',
+          label: '温度 temperature',
+          standardText: '标准范围：30℃ - 38℃',
+          description: '发酵温度异常会影响发酵质量。',
+          placeholder: '例如：36'
+        },
+        {
+          paramName: 'humidity',
+          paramLabel: '湿度',
+          label: '湿度 humidity',
+          standardText: '标准范围：60% - 85%',
+          description: '湿度异常会影响发酵环境。',
+          placeholder: '例如：75'
+        },
+        {
+          paramName: 'microbe',
+          paramLabel: '微生物浓度',
+          label: '微生物浓度 microbe',
+          standardText: '标准范围：0.3 - 0.8',
+          description: '微生物浓度异常会影响发酵质量。',
+          placeholder: '例如：0.5'
+        },
+        {
+          paramName: 'seal_status',
+          paramLabel: '密封状态',
+          label: '密封状态 seal_status',
+          standardText: '标准要求：已密封 / 正常',
+          description: '密封状态异常会影响发酵过程。',
+          placeholder: '例如：已密封'
+        }
+      ]
+    },
+    {
+      stepIndex: 3,
+      stepName: '蒸馏操作',
+      description: '控制压力和蒸馏状态',
+      params: [
+        {
+          paramName: 'pressure',
+          paramLabel: '压力',
+          label: '压力 pressure',
+          standardText: '标准范围：0.10MPa - 0.25MPa',
+          description: '压力异常可能影响蒸馏安全与效果。',
+          placeholder: '例如：0.18'
+        },
+        {
+          paramName: 'duration',
+          paramLabel: '时长',
+          label: '时长 duration',
+          standardText: '标准范围：60 - 120分钟',
+          description: '时长过短或过长都会影响实训结果。',
+          placeholder: '例如：90'
+        }
+      ]
+    }
+  ]
+}
 
-const paramOptions = [
-  {
-    label: '温度 temperature',
-    value: 'temperature',
-    standard: '标准范围：30℃ - 38℃',
-    description: '温度过高或过低都会影响发酵、蒸煮或蒸馏效果。',
-    placeholder: '例如：36'
-  },
-  {
-    label: '湿度 humidity',
-    value: 'humidity',
-    standard: '标准范围：60% - 85%',
-    description: '湿度异常可能影响发酵环境稳定性。',
-    placeholder: '例如：75'
-  },
-  {
-    label: '压力 pressure',
-    value: 'pressure',
-    standard: '标准范围：0.10MPa - 0.25MPa',
-    description: '压力异常可能影响蒸馏安全与出酒质量。',
-    placeholder: '例如：0.18'
-  },
-  {
-    label: '时长 duration',
-    value: 'duration',
-    standard: '标准范围：60 - 120分钟',
-    description: '工艺时长过短或过长都会影响实训结果。',
-    placeholder: '例如：90'
-  },
-  {
-    label: '微生物浓度 microbe',
-    value: 'microbe',
-    standard: '标准范围：0.3 - 0.8',
-    description: '微生物浓度异常会影响发酵质量。',
-    placeholder: '例如：0.5'
-  },
-  {
-    label: '密封状态 seal_status',
-    value: 'seal_status',
-    standard: '标准要求：已密封 / 正常',
-    description: '密封状态异常会影响发酵过程和安全性。',
-    placeholder: '例如：已密封'
-  }
-]
+const trainingContent = ref(defaultTrainingContent)
+
+const trainingSteps = computed(() => {
+  return trainingContent.value.steps || []
+})
 
 const currentStep = computed(() => {
-  return trainingSteps.find(item => item.stepIndex === form.stepIndex)
+  return trainingSteps.value.find(item => {
+    return Number(item.stepIndex) === Number(form.stepIndex)
+  })
+})
+
+const currentStepActiveIndex = computed(() => {
+  const index = trainingSteps.value.findIndex(item => {
+    return Number(item.stepIndex) === Number(form.stepIndex)
+  })
+
+  return index < 0 ? 0 : index
+})
+
+const paramOptions = computed(() => {
+  return currentStep.value?.params || []
 })
 
 const currentParamInfo = computed(() => {
-  return paramOptions.find(item => item.value === form.paramName)
+  return paramOptions.value.find(item => {
+    const name = item.paramName || item.value
+    return name === form.paramName
+  })
 })
+
+const isCorrectValue = value => {
+  return value === true || value === 1 || value === '1'
+}
+
+const getParamLabel = item => {
+  if (item.label) {
+    return item.label
+  }
+
+  if (item.paramLabel && item.paramName) {
+    return `${item.paramLabel} ${item.paramName}`
+  }
+
+  return item.paramName || item.value || '未知参数'
+}
+
+const getStandardText = item => {
+  return item.standardText || item.standard || item.standardRange || '暂无标准范围'
+}
+
+const loadTrainingContent = async () => {
+  if (!form.sessionId) return
+
+  try {
+    const data = await getTrainingContent(form.sessionId)
+
+    if (data && Array.isArray(data.steps) && data.steps.length > 0) {
+      trainingContent.value = data
+      usingFallbackContent.value = false
+      fixCurrentStepAfterContentLoaded()
+      return
+    }
+
+    trainingContent.value = defaultTrainingContent
+    usingFallbackContent.value = true
+    fixCurrentStepAfterContentLoaded()
+  } catch (error) {
+    console.warn('实训内容接口暂未接入，当前使用临时兜底流程')
+    trainingContent.value = defaultTrainingContent
+    usingFallbackContent.value = true
+    fixCurrentStepAfterContentLoaded()
+  }
+}
+
+const fixCurrentStepAfterContentLoaded = () => {
+  if (trainingSteps.value.length === 0) {
+    form.stepIndex = 1
+    form.paramName = ''
+    form.paramValue = ''
+    return
+  }
+
+  const exists = trainingSteps.value.some(item => {
+    return Number(item.stepIndex) === Number(form.stepIndex)
+  })
+
+  if (!exists) {
+    form.stepIndex = trainingSteps.value[0].stepIndex
+  }
+
+  const paramExists = paramOptions.value.some(item => {
+    const name = item.paramName || item.value
+    return name === form.paramName
+  })
+
+  if (!paramExists) {
+    form.paramName = ''
+    form.paramValue = ''
+  }
+}
 
 const submitOperation = async () => {
   if (!form.sessionId) {
@@ -325,7 +459,7 @@ const submitOperation = async () => {
 
     result.value = data
 
-    if (Number(data.isCorrect) === 1) {
+    if (isCorrectValue(data.isCorrect)) {
       ElMessage.success('参数提交成功，当前操作合规')
     } else {
       ElMessage.warning('参数提交成功，但系统检测到异常，请查看AI建议')
@@ -339,7 +473,12 @@ const submitOperation = async () => {
 }
 
 const resetForm = () => {
-  form.stepIndex = 1
+  if (trainingSteps.value.length > 0) {
+    form.stepIndex = trainingSteps.value[0].stepIndex
+  } else {
+    form.stepIndex = 1
+  }
+
   form.paramName = ''
   form.paramValue = ''
   result.value = null
@@ -354,7 +493,6 @@ const loadInterventionList = async (showNotice = true) => {
     })
 
     const list = Array.isArray(data) ? data : []
-
     const latestItem = list[0]
     const latestKey = latestItem ? String(getInterventionKey(latestItem)) : ''
 
@@ -402,18 +540,28 @@ const getInterventionContent = item => {
 }
 
 const isInterventionRead = item => {
-  const key = String(getInterventionKey(item))
-  return readInterventionKeys.value.includes(key)
+  return item.isRead === 1 || item.isRead === true || item.isRead === '1'
 }
 
-const markInterventionRead = item => {
-  const key = String(getInterventionKey(item))
+const handleMarkInterventionRead = async item => {
+  const interventionId = item.interventionId || item.id
 
-  if (!readInterventionKeys.value.includes(key)) {
-    readInterventionKeys.value.push(key)
+  if (!interventionId) {
+    ElMessage.warning('缺少教师干预ID，无法标记已读')
+    return
   }
 
-  ElMessage.success('已标记为查看')
+  try {
+    await markInterventionRead(interventionId)
+
+    item.isRead = 1
+    item.readTime = new Date().toISOString()
+
+    ElMessage.success('已标记为查看')
+  } catch (error) {
+    console.error('标记教师干预已读失败：', error)
+    ElMessage.error('标记已读失败，请检查后端接口')
+  }
 }
 
 const formatTime = time => {
@@ -434,7 +582,19 @@ watch(
     result.value = null
     interventionList.value = []
     lastInterventionKey.value = ''
+    form.paramName = ''
+    form.paramValue = ''
+
+    loadTrainingContent()
     loadInterventionList(false)
+  }
+)
+
+watch(
+  () => form.stepIndex,
+  () => {
+    form.paramName = ''
+    form.paramValue = ''
   }
 )
 
@@ -446,6 +606,7 @@ watch(
 )
 
 onMounted(() => {
+  loadTrainingContent()
   loadInterventionList(false)
 
   interventionTimer = setInterval(() => {
@@ -477,6 +638,15 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-tags {
+  display: flex;
+  gap: 8px;
+}
+
+.fallback-alert {
+  margin-bottom: 16px;
 }
 
 .training-form {

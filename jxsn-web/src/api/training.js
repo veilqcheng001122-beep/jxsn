@@ -28,6 +28,18 @@ export function getTrainingDetail(recordId) {
     })
 }
 
+// 获取实训内容配置：工序、步骤、参数、标准范围
+// 后续由队友提供真实接口；当前学生端会自动兜底，不影响页面使用
+export function getTrainingContent(sessionId) {
+    return request({
+        url: '/training/content',
+        method: 'get',
+        params: {
+            sessionId
+        }
+    })
+}
+
 // 教师远程干预
 export function sendIntervention(data) {
     return request({
@@ -52,5 +64,16 @@ export function getInterventionList(params) {
         url: '/training/intervention/list',
         method: 'get',
         params
+    })
+}
+
+// 学生标记教师干预为已读
+export function markInterventionRead(interventionId) {
+    return request({
+        url: '/training/intervention/read',
+        method: 'put',
+        data: {
+            interventionId
+        }
     })
 }

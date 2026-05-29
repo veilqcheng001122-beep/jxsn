@@ -8,4 +8,6 @@ public interface InterventionService {
     Result sendIntervention(InterventionRequest request);
 
     Result listInterventions(Long sessionId);
+
+    Result markInterventionRead(Long interventionId);
 }

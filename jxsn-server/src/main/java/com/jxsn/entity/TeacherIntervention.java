@@ -1,6 +1,7 @@
 package com.jxsn.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -21,4 +22,10 @@ public class TeacherIntervention {
     private String interventionAction;
 
     private LocalDateTime interventionTime;
+
+    @TableField("is_read")
+    private Integer isRead;
+
+    @TableField("read_time")
+    private LocalDateTime readTime;
 }

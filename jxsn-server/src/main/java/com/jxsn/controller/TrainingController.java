@@ -68,4 +68,9 @@ public class TrainingController {
         return trainingDetailService.getTrainingDetail(recordId);
     }
 
+    @PutMapping("/intervention/read")
+    public Result markInterventionRead(@RequestBody Map<String, Long> body) {
+        return interventionService.markInterventionRead(body.get("interventionId"));
+    }
+
 }

@@ -89,4 +89,26 @@ public class InterventionServiceImpl implements InterventionService {
         return value != null && !value.trim().isEmpty();
     }
 
+    @Override
+    public Result markInterventionRead(Long interventionId) {
+        if (interventionId == null) {
+            return Result.fail("缺少教师干预ID");
+        }
+
+        TeacherIntervention intervention = teacherInterventionMapper.selectById(interventionId);
+
+        if (intervention == null) {
+            return Result.fail("未找到对应教师干预记录");
+        }
+
+        TeacherIntervention update = new TeacherIntervention();
+        update.setInterventionId(interventionId);
+        update.setIsRead(1);
+        update.setReadTime(LocalDateTime.now());
+
+        teacherInterventionMapper.updateById(update);
+
+        return Result.success("已标记为已读");
+    }
+
 }
