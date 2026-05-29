@@ -1,29 +1,29 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const getToken = () => {
-    return localStorage.getItem('token')
+    return sessionStorage.getItem('token')
 }
 
 const getRole = () => {
-    return localStorage.getItem('role') || 'teacher'
+    return (sessionStorage.getItem('role') || '').toLowerCase()
 }
 
 const getDefaultPath = () => {
     const role = getRole()
 
     if (role === 'student') {
-        return '/guide/correction'
+        return '/student/training'
     }
 
     if (role === 'teacher') {
         return '/training/monitor'
     }
 
-    if (role === 'admin') {
+    if (role === 'admin' || role === 'researcher') {
         return '/training/monitor'
     }
 
-    return '/training/monitor'
+    return '/login'
 }
 
 const routes = [
@@ -37,34 +37,45 @@ const routes = [
         redirect: () => getDefaultPath(),
         children: [
             {
-                path: 'training/monitor',
+                path: '/student/training',
+                component: () => import('../views/StudentTraining.vue'),
+                meta: {
+                    roles: ['student']
+                }
+            },
+            {
+                path: '/training/monitor',
                 component: () => import('../views/TrainingMonitor.vue'),
                 meta: {
-                    roles: ['teacher', 'admin']
+                    roles: ['teacher', 'admin', 'researcher']
                 }
             },
             {
-                path: 'training/detail/:recordId',
+                path: '/training/detail/:recordId',
                 component: () => import('../views/TrainingDetail.vue'),
                 meta: {
-                    roles: ['teacher', 'admin']
+                    roles: ['teacher', 'admin', 'researcher']
                 }
             },
             {
-                path: 'guide/correction',
+                path: '/guide/correction',
                 component: () => import('../views/GuideCorrection.vue'),
                 meta: {
-                    roles: ['student', 'teacher', 'admin']
+                    roles: ['student', 'teacher', 'admin', 'researcher']
                 }
             },
             {
-                path: 'rule/manage',
+                path: '/rule/manage',
                 component: () => import('../views/RuleManage.vue'),
                 meta: {
-                    roles: ['admin']
+                    roles: ['admin', 'researcher']
                 }
             }
         ]
+    },
+    {
+        path: '/:pathMatch(.*)*',
+        redirect: '/login'
     }
 ]
 
@@ -78,7 +89,7 @@ router.beforeEach((to, from, next) => {
     const role = getRole()
 
     if (to.path === '/login') {
-        if (token) {
+        if (token && role) {
             next(getDefaultPath())
         } else {
             next()
@@ -86,7 +97,7 @@ router.beforeEach((to, from, next) => {
         return
     }
 
-    if (!token) {
+    if (!token || !role) {
         next('/login')
         return
     }

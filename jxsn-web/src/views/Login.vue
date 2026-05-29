@@ -11,7 +11,7 @@
         <el-form-item label="账号">
           <el-input
             v-model="loginForm.username"
-            placeholder="请输入账号：student / teacher / admin"
+            placeholder="student / teacher / admin"
           />
         </el-form-item>
 
@@ -19,13 +19,13 @@
           <el-input
             v-model="loginForm.password"
             type="password"
-            placeholder="请输入密码：123456"
             show-password
+            placeholder="123456"
           />
         </el-form-item>
 
         <el-form-item label="身份">
-          <el-select v-model="loginForm.role" placeholder="请选择身份" style="width: 100%">
+          <el-select v-model="loginForm.role" style="width: 100%">
             <el-option label="学生" value="student" />
             <el-option label="教师" value="teacher" />
             <el-option label="管理员" value="admin" />
@@ -58,48 +58,54 @@ const loginForm = reactive({
 })
 
 const defaultPathMap = {
-  student: '/guide/correction',
+  student: '/student/training',
   teacher: '/training/monitor',
   admin: '/training/monitor'
 }
 
 const handleLogin = () => {
-  if (!loginForm.username || !loginForm.password) {
+  const username = loginForm.username.trim().toLowerCase()
+  const password = loginForm.password.trim()
+  const role = loginForm.role.trim().toLowerCase()
+
+  if (!username || !password) {
     ElMessage.warning('请输入账号和密码')
     return
   }
 
-  if (loginForm.password !== '123456') {
+  if (password !== '123456') {
     ElMessage.error('密码错误')
     return
   }
 
   const allowUsers = ['student', 'teacher', 'admin']
 
-  if (!allowUsers.includes(loginForm.username)) {
+  if (!allowUsers.includes(username)) {
     ElMessage.error('账号不存在')
     return
   }
 
-  if (loginForm.username !== loginForm.role) {
+  if (username !== role) {
     ElMessage.warning('账号与身份不匹配')
     return
   }
 
-  localStorage.setItem('token', 'mock-token')
-  localStorage.setItem('role', loginForm.role)
-  localStorage.setItem('username', loginForm.username)
+  // 模拟保存登录状态和 Token
+  sessionStorage.setItem('token', 'mock-token')
+  sessionStorage.setItem('role', role)
+  sessionStorage.setItem('username', username)
 
   ElMessage.success('登录成功')
 
-  router.push(defaultPathMap[loginForm.role])
+  // 根据身份跳转到对应页面
+  router.replace(defaultPathMap[role])
 }
 </script>
 
 <style scoped>
 .login-container {
   height: 100vh;
-  background: linear-gradient(135deg, #1f2d3d, #ffffff);
+  background: linear-gradient(135deg, #1f2d3d, #409eff);
   display: flex;
   justify-content: center;
   align-items: center;

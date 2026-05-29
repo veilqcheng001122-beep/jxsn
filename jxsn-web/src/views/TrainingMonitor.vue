@@ -1,5 +1,3 @@
-
-
 <template>
   <div class="page-container">
     <el-card class="stat-card">
@@ -39,30 +37,44 @@
     </el-card>
 
     <el-form :inline="true" :model="queryForm" style="margin-bottom: 20px">
-        <el-form-item label="学生姓名">
-            <el-input v-model="queryForm.studentName" placeholder="请输入学生姓名" clearable />
-        </el-form-item>
-        <el-form-item label="学号">
-            <el-input v-model="queryForm.studentNo" placeholder="请输入学号" clearable />
-        </el-form-item>
-        <el-form-item label="实训工序">
-            <el-select
-            v-model="queryForm.processName"
-            placeholder="请选择工序"
-            clearable
-            style="width: 160px"
-            >
-    <el-option label="原料处理" value="原料处理" />
-    <el-option label="发酵控制" value="发酵控制" />
-    <el-option label="蒸馏操作" value="蒸馏操作" />
-    <el-option label="陈酿管理" value="陈酿管理" />
-  </el-select>
-</el-form-item>
+      <el-form-item label="学生姓名">
+        <el-input
+          v-model="queryForm.studentName"
+          placeholder="请输入学生姓名"
+          clearable
+        />
+      </el-form-item>
 
-        <el-form-item>
-            <el-button type="primary" @click="loadTrainingRecords">查询</el-button>
-            <el-button @click="resetQuery">重置</el-button>
-        </el-form-item>
+      <el-form-item label="学号">
+        <el-input
+          v-model="queryForm.studentNo"
+          placeholder="请输入学号"
+          clearable
+        />
+      </el-form-item>
+
+      <el-form-item label="实训工序">
+        <el-select
+          v-model="queryForm.processName"
+          placeholder="请选择工序"
+          clearable
+          style="width: 160px"
+        >
+          <el-option label="原料处理" value="原料处理" />
+          <el-option label="发酵控制" value="发酵控制" />
+          <el-option label="蒸馏操作" value="蒸馏操作" />
+          <el-option label="陈酿管理" value="陈酿管理" />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item>
+        <el-button type="primary" @click="loadTrainingRecords">
+          查询
+        </el-button>
+        <el-button @click="resetQuery">
+          重置
+        </el-button>
+      </el-form-item>
     </el-form>
 
     <el-card class="table-card">
@@ -91,145 +103,116 @@
 
         <el-table-column prop="warningCount" label="异常次数" />
         <el-table-column prop="latestOperation" label="最新操作" />
+
         <el-table-column label="更新时间" width="180">
-            <template #default="{ row }">
-                {{ formatTime(row.updateTime) }}
-            </template>
+          <template #default="{ row }">
+            {{ formatTime(row.updateTime) }}
+          </template>
         </el-table-column>
 
         <el-table-column label="操作" width="220">
-            <template #default="{ row }">
-                <el-button type="primary" link @click="viewDetail(row)">
-                    查看详情
-                </el-button>
-                <el-button type="warning" link @click="openIntervene(row)">
-                    远程干预
-                </el-button>
-            </template>
+          <template #default="{ row }">
+            <el-button type="primary" link @click="viewDetail(row)">
+              查看详情
+            </el-button>
+            <el-button type="warning" link @click="openIntervene(row)">
+              远程干预
+            </el-button>
+          </template>
         </el-table-column>
       </el-table>
     </el-card>
 
-<el-dialog v-model="interveneDialogVisible" title="教师远程干预" width="680px">
-  <el-form :model="interveneForm" label-width="120px">
-    <el-form-item label="学生姓名">
-      <el-input v-model="interveneForm.studentName" disabled />
-    </el-form-item>
+    <el-dialog
+      v-model="interveneDialogVisible"
+      title="教师远程干预"
+      width="680px"
+    >
+      <el-form :model="interveneForm" label-width="120px">
+        <el-form-item label="学生姓名">
+          <el-input v-model="interveneForm.studentName" disabled />
+        </el-form-item>
 
-    <el-form-item label="修正参数">
-      <div style="width: 100%">
-        <div
-          v-for="(item, index) in interveneForm.paramList"
-          :key="index"
-          style="display: flex; gap: 10px; margin-bottom: 10px"
-        >
-          <el-select
-            v-model="item.paramName"
-            placeholder="请选择参数"
-            style="width: 220px"
-          >
-            <el-option label="温度 temperature" value="temperature" />
-            <el-option label="湿度 humidity" value="humidity" />
-            <el-option label="压力 pressure" value="pressure" />
-            <el-option label="时长 duration" value="duration" />
-            <el-option label="微生物浓度 microbe" value="microbe" />
-            <el-option label="密封状态 seal_status" value="seal_status" />
-          </el-select>
+        <el-form-item label="修正参数">
+          <div style="width: 100%">
+            <div
+              v-for="(item, index) in interveneForm.paramList"
+              :key="index"
+              style="display: flex; gap: 10px; margin-bottom: 10px"
+            >
+              <el-select
+                v-model="item.paramName"
+                placeholder="请选择参数"
+                style="width: 220px"
+              >
+                <el-option label="温度 temperature" value="temperature" />
+                <el-option label="湿度 humidity" value="humidity" />
+                <el-option label="压力 pressure" value="pressure" />
+                <el-option label="时长 duration" value="duration" />
+                <el-option label="微生物浓度 microbe" value="microbe" />
+                <el-option label="密封状态 seal_status" value="seal_status" />
+              </el-select>
 
+              <el-input
+                v-model="item.paramValue"
+                placeholder="修正值，例如：36、85、已密封"
+              />
+
+              <el-button
+                type="danger"
+                plain
+                :disabled="interveneForm.paramList.length === 1"
+                @click="removeInterveneParam(index)"
+              >
+                删除
+              </el-button>
+            </div>
+
+            <el-button type="primary" plain @click="addInterveneParam">
+              添加参数
+            </el-button>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="指导话语">
           <el-input
-            v-model="item.paramValue"
-            placeholder="修正值，例如：36、85、已密封"
+            v-model="interveneForm.guidanceText"
+            type="textarea"
+            :rows="4"
+            placeholder="例如：当前参数存在偏差，请根据教师修正值重新确认设备状态后继续实训。"
           />
+        </el-form-item>
+      </el-form>
 
-          <el-button
-            type="danger"
-            plain
-            @click="removeInterveneParam(index)"
-            :disabled="interveneForm.paramList.length === 1"
-          >
-            删除
-          </el-button>
-        </div>
-
-        <el-button type="primary" plain @click="addInterveneParam">
-          添加参数
+      <template #footer>
+        <el-button @click="interveneDialogVisible = false">
+          取消
         </el-button>
-      </div>
-    </el-form-item>
 
-    <el-form-item label="指导话语">
-      <el-input
-        v-model="interveneForm.guidanceText"
-        type="textarea"
-        :rows="4"
-        placeholder="例如：当前参数存在偏差，请根据教师修正值重新确认设备状态后继续实训。"
-      />
-    </el-form-item>
-  </el-form>
-
-  <template #footer>
-    <el-button @click="interveneDialogVisible = false">
-      取消
-    </el-button>
-
-    <el-button type="primary" @click="submitIntervene">
-      下发干预
-    </el-button>
-  </template>
-</el-dialog>
-
+        <el-button type="primary" @click="submitIntervene">
+          下发干预
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
-import { getTrainingMonitor, getTrainingRecords, sendIntervention } from '@/api/training'
-import { reactive } from 'vue'
-import { ElMessage } from 'element-plus'
+import { onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import {
+  getTrainingMonitor,
+  getTrainingRecords,
+  sendIntervention
+} from '@/api/training'
 
 const router = useRouter()
-const viewDetail = (row) => {
-  router.push(`/training/detail/${row.recordId}`)
-}
-const queryForm = reactive({
-  studentName: '',
-  studentNo: '',
-  processType: '',
-  timeRange: []
-})
 
-const buildQueryParams = () => {
-  return {
-    studentName: queryForm.studentName,
-    studentNo: queryForm.studentNo,
-    processName: queryForm.processName,
-    startTime: queryForm.timeRange?.[0] || '',
-    endTime: queryForm.timeRange?.[1] || ''
-  }
-}
-
-const loadTrainingRecords = async () => {
-  loading.value = true
-
-  try {
-    const data = await getTrainingRecords(buildQueryParams())
-    tableData.value = data.records || []
-  } finally {
-    loading.value = false
-  }
-}
-
-const resetQuery = () => {
-  queryForm.studentName = ''
-  queryForm.studentNo = ''
-  queryForm.processName = ''
-  queryForm.timeRange = []
-
-  loadTrainingRecords()
-}
+let pollIntervalId = null
 
 const loading = ref(false)
+const tableData = ref([])
 
 const monitorData = ref({
   onlineCount: 0,
@@ -238,15 +221,12 @@ const monitorData = ref({
   finishedCount: 0
 })
 
-const tableData = ref([])
-
-
-
-const loadMonitorData = async () => {
-  const data = await getTrainingMonitor()
-  monitorData.value = data
-}
-
+const queryForm = reactive({
+  studentName: '',
+  studentNo: '',
+  processName: '',
+  timeRange: []
+})
 
 const interveneDialogVisible = ref(false)
 
@@ -261,6 +241,58 @@ const interveneForm = reactive({
   ],
   guidanceText: ''
 })
+
+const buildQueryParams = () => {
+  return {
+    studentName: queryForm.studentName,
+    studentNo: queryForm.studentNo,
+    processName: queryForm.processName,
+    startTime: queryForm.timeRange?.[0] || '',
+    endTime: queryForm.timeRange?.[1] || ''
+  }
+}
+
+const loadMonitorData = async () => {
+  try {
+    const data = await getTrainingMonitor()
+
+    monitorData.value = data || {
+      onlineCount: 0,
+      runningCount: 0,
+      warningCount: 0,
+      finishedCount: 0
+    }
+  } catch (error) {
+    console.error('加载监控统计失败：', error)
+  }
+}
+
+const loadTrainingRecords = async () => {
+  loading.value = true
+
+  try {
+    const data = await getTrainingRecords(buildQueryParams())
+    tableData.value = data?.records || []
+  } catch (error) {
+    console.error('加载实训记录失败：', error)
+    tableData.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+const resetQuery = () => {
+  queryForm.studentName = ''
+  queryForm.studentNo = ''
+  queryForm.processName = ''
+  queryForm.timeRange = []
+
+  loadTrainingRecords()
+}
+
+const viewDetail = row => {
+  router.push(`/training/detail/${row.recordId}`)
+}
 
 const addInterveneParam = () => {
   interveneForm.paramList.push({
@@ -302,18 +334,23 @@ const submitIntervene = async () => {
     return
   }
 
-  await sendIntervention({
-    recordId: interveneForm.recordId,
-    sessionId: interveneForm.recordId,
-    studentName: interveneForm.studentName,
-    paramList: interveneForm.paramList,
-    guidanceText: interveneForm.guidanceText
-  })
+  try {
+    await sendIntervention({
+      recordId: interveneForm.recordId,
+      sessionId: interveneForm.recordId,
+      studentName: interveneForm.studentName,
+      paramList: interveneForm.paramList,
+      guidanceText: interveneForm.guidanceText
+    })
 
-  ElMessage.success('远程干预已下发，多个参数与指导话语已更新')
-  interveneDialogVisible.value = false
+    ElMessage.success('远程干预已下发，多个参数与指导话语已更新')
+    interveneDialogVisible.value = false
 
-  loadTrainingRecords()
+    loadTrainingRecords()
+  } catch (error) {
+    console.error('下发远程干预失败：', error)
+    ElMessage.error('远程干预下发失败，请检查后端接口')
+  }
 }
 
 const formatTime = time => {
@@ -323,9 +360,22 @@ const formatTime = time => {
     .replace('T', ' ')
     .substring(0, 19)
 }
+
 onMounted(() => {
   loadMonitorData()
   loadTrainingRecords()
+
+  pollIntervalId = setInterval(() => {
+    loadMonitorData()
+    loadTrainingRecords()
+  }, 2000)
+})
+
+onUnmounted(() => {
+  if (pollIntervalId) {
+    clearInterval(pollIntervalId)
+    pollIntervalId = null
+  }
 })
 </script>
 

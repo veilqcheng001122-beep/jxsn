@@ -54,8 +54,8 @@ import { ElMessageBox, ElMessage } from 'element-plus'
 const router = useRouter()
 const route = useRoute()
 
-const currentRole = ref(localStorage.getItem('role') || 'teacher')
-const username = ref(localStorage.getItem('username') || 'teacher')
+const currentRole = ref((sessionStorage.getItem('role') || '').toLowerCase())
+const username = ref(sessionStorage.getItem('username') || '')
 
 const roleMap = {
   student: '学生',
@@ -71,9 +71,13 @@ const menus = computed(() => {
   if (currentRole.value === 'student') {
     return [
       {
-        title: '智能指导与纠错',
+       title: '我的实训操作',
+        path: '/student/training'
+     },
+      {
+       title: '智能指导与纠错',
         path: '/guide/correction'
-      }
+     }
     ]
   }
 
@@ -128,9 +132,9 @@ const logout = () => {
       cancelButtonText: '取消'
     }
   ).then(() => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('role')
-    localStorage.removeItem('username')
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('role')
+    sessionStorage.removeItem('username')
 
     ElMessage.success('已退出登录')
     router.push('/login')

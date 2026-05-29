@@ -2,8 +2,10 @@ package com.jxsn.controller;
 
 import com.jxsn.common.Result;
 import com.jxsn.dto.InterventionRequest;
+import com.jxsn.dto.TrainingOperationRequest;
 import com.jxsn.service.InterventionService;
 import com.jxsn.service.TrainingDetailService;
+import com.jxsn.service.TrainingOperationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +22,13 @@ public class TrainingController {
     private InterventionService interventionService;
     @Autowired
     private TrainingDetailService trainingDetailService;
+    @Autowired
+    private TrainingOperationService trainingOperationService;
+
+    @PostMapping("/operation/submit")
+    public Result submitOperation(@RequestBody TrainingOperationRequest request) {
+        return trainingOperationService.submitOperation(request);
+    }
 
     @PostMapping("/intervene")
     public Result sendIntervention(@RequestBody InterventionRequest request) {

@@ -1,6 +1,6 @@
 import request from './request'
 
-// 获取监控大屏统计数据
+// 获取教师端监控统计数据
 export function getTrainingMonitor() {
     return request({
         url: '/training/monitor',
@@ -17,6 +17,18 @@ export function getTrainingRecords(params) {
     })
 }
 
+// 获取实训详情
+export function getTrainingDetail(recordId) {
+    return request({
+        url: '/training/detail',
+        method: 'get',
+        params: {
+            recordId
+        }
+    })
+}
+
+// 教师远程干预
 export function sendIntervention(data) {
     return request({
         url: '/training/intervene',
@@ -25,12 +37,20 @@ export function sendIntervention(data) {
     })
 }
 
-export function getTrainingDetail(recordId) {
+// 学生提交实训操作参数
+export function submitTrainingOperation(data) {
     return request({
-        url: '/training/detail',
+        url: '/training/operation/submit',
+        method: 'post',
+        data
+    })
+}
+
+// 查询教师干预记录
+export function getInterventionList(params) {
+    return request({
+        url: '/training/intervention/list',
         method: 'get',
-        params: {
-            recordId
-        }
+        params
     })
 }
