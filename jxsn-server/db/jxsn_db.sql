@@ -60,7 +60,7 @@ CREATE TABLE `operation_log` (
   PRIMARY KEY (`log_id`),
   KEY `fk_log_session` (`session_id`),
   CONSTRAINT `fk_log_session` FOREIGN KEY (`session_id`) REFERENCES `training_session` (`session_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='实训操作过程实时记录表';
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='实训操作过程实时记录表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -69,7 +69,7 @@ CREATE TABLE `operation_log` (
 
 LOCK TABLES `operation_log` WRITE;
 /*!40000 ALTER TABLE `operation_log` DISABLE KEYS */;
-INSERT INTO `operation_log` VALUES (1,1,1,'temperature=36',1,'当前温度符合发酵工艺要求，可继续进行下一步。','2026-05-27 14:51:35.506'),(2,1,2,'humidity=95',0,'系统检测到湿度偏高，请适当降低湿度并重新观察发酵状态。','2026-05-27 14:51:35.506'),(3,2,1,'temperature=36',1,'当前发酵温度符合工艺要求，可继续进行下一步。','2026-05-27 15:35:09.707'),(4,2,2,'humidity=95',0,'系统检测到湿度参数异常，请检查发酵环境湿度设置，适当降低或提高湿度，使其回到标准工艺范围内。','2026-05-27 15:45:09.707'),(5,2,3,'microbe=0.72',1,'当前微生物浓度处于合理范围，发酵状态正常。','2026-05-27 16:00:09.707'),(6,3,1,'temperature=92',1,'当前蒸馏温度符合要求，可继续保持观察。','2026-05-27 15:00:09.712'),(7,3,2,'pressure=0.32',0,'系统检测到蒸馏压力偏高，请检查阀门状态并适当降低加热强度。','2026-05-27 15:20:09.712'),(8,3,3,'duration=95',0,'系统检测到工艺时长异常，请核对当前步骤的标准操作时间，避免过短或过长影响实训结果。','2026-05-27 15:50:09.712'),(9,4,1,'wash_status=完成',1,'原料清洗完成，符合实训流程要求。','2026-05-27 14:20:09.717'),(10,4,2,'crush_level=适中',1,'原料粉碎程度适中，可进入投料环节。','2026-05-27 14:40:09.717'),(11,4,3,'feed_order=正确',1,'投料顺序正确，本次原料处理实训完成。','2026-05-27 15:40:09.717'),(12,5,1,'storage_temp=24',1,'当前陈酿环境温度正常。','2026-05-27 15:50:09.721'),(13,5,2,'seal_status=未密封',0,'系统检测到容器密封状态异常，请重新检查封口情况，确认密封完成后再继续后续操作。','2026-05-27 16:02:09.721');
+INSERT INTO `operation_log` VALUES (1,1,1,'temperature=111',1,'去微软推哦怕','2026-05-29 11:00:57.110'),(2,1,2,'humidity=95',0,'系统检测到湿度偏高，请适当降低湿度并重新观察发酵状态。','2026-05-27 14:51:35.506'),(3,2,1,'temperature=36',1,'当前发酵温度符合工艺要求，可继续进行下一步。','2026-05-27 15:35:09.707'),(4,2,2,'humidity=95',0,'系统检测到湿度参数异常，请检查发酵环境湿度设置，适当降低或提高湿度，使其回到标准工艺范围内。','2026-05-27 15:45:09.707'),(5,2,3,'microbe=0.72',1,'当前微生物浓度处于合理范围，发酵状态正常。','2026-05-27 16:00:09.707'),(6,3,1,'temperature=92',1,'当前蒸馏温度符合要求，可继续保持观察。','2026-05-27 15:00:09.712'),(7,3,2,'pressure=0.32',0,'系统检测到蒸馏压力偏高，请检查阀门状态并适当降低加热强度。','2026-05-27 15:20:09.712'),(8,3,3,'duration=95',0,'系统检测到工艺时长异常，请核对当前步骤的标准操作时间，避免过短或过长影响实训结果。','2026-05-27 15:50:09.712'),(9,4,1,'wash_status=完成',1,'原料清洗完成，符合实训流程要求。','2026-05-27 14:20:09.717'),(10,4,2,'crush_level=适中',1,'原料粉碎程度适中，可进入投料环节。','2026-05-27 14:40:09.717'),(11,4,3,'feed_order=正确',1,'投料顺序正确，本次原料处理实训完成。','2026-05-27 15:40:09.717'),(12,5,1,'storage_temp=24',1,'当前陈酿环境温度正常。','2026-05-27 15:50:09.721'),(13,5,2,'pressure=345',1,'123454321','2026-05-29 09:37:13.986'),(14,5,3,'temperature=23',1,'123454321','2026-05-29 09:37:13.978'),(15,2,5,'temperature=26666',0,'系统检测到温度参数异常，请将温度控制在30℃至38℃范围内。','2026-05-29 10:54:41.668'),(16,2,5,'temperature=31',1,'当前参数 temperature=31 符合工艺要求，可继续进行下一步实训。','2026-05-29 10:54:52.448'),(18,1,2,'pressure=333333333',0,'系统检测到压力参数异常，请检查蒸馏设备阀门状态和加热强度，避免压力过高影响安全与蒸馏效果。','2026-05-29 10:57:34.381'),(19,1,2,'pressure=0.101',1,'0.101','2026-05-29 10:58:58.848'),(20,1,1,'temperature=22222222222222',0,'系统检测到温度参数异常，请将温度控制在30℃至38℃范围内。','2026-05-29 11:02:04.349'),(21,1,1,'duration=56484815',0,'系统检测到工艺时长异常，请将操作时长控制在60至120分钟范围内。','2026-05-29 11:14:48.997'),(22,1,1,'seal_status=2626',0,'系统检测到密封状态异常，请检查容器封口，确认密封完成后继续操作。','2026-05-29 11:43:07.669'),(23,1,1,'duration=268',0,'系统检测到工艺时长异常，请将操作时长控制在60至120分钟范围内。','2026-05-29 11:43:41.222'),(24,1,1,'temperature=33',1,'系统检测到温度参数异常，请将温度控制在30℃至38℃范围内。','2026-05-29 14:18:08.681'),(25,1,1,'temperature=33',1,'当前参数 temperature=33 符合工艺要求，可继续进行下一步实训。','2026-05-29 14:19:26.668'),(26,1,3,'temperature=33',1,'当前参数 temperature=33 符合工艺要求，可继续进行下一步实训。','2026-05-29 14:24:01.499'),(27,1,6,'temperature=33',1,'当前参数 temperature=33 符合工艺要求，可继续进行下一步实训。','2026-05-29 14:24:26.724'),(28,1,6,'temperature=33',1,'当前参数 temperature=33 符合工艺要求，可继续进行下一步实训。','2026-05-29 14:24:29.190'),(29,1,4,'duration=20',0,'系统检测到工艺时长异常，请将操作时长控制在60至120分钟范围内。','2026-05-29 15:10:18.496'),(30,1,4,'duration=40',0,'系统检测到工艺时长异常，请将操作时长控制在60至120分钟范围内。','2026-05-29 15:11:17.653'),(31,1,4,'duration=100',1,'当前参数 duration=100 符合工艺要求，可继续进行下一步实训。','2026-05-29 15:11:28.215'),(32,1,2,'temperature=24',0,'系统检测到温度参数异常，请将温度控制在30℃至38℃范围内。','2026-05-29 15:41:12.436'),(33,1,2,'temperature=34',1,'当前参数 temperature=34 符合工艺要求，可继续进行下一步实训。','2026-05-29 15:41:18.064');
 /*!40000 ALTER TABLE `operation_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -176,12 +176,14 @@ CREATE TABLE `teacher_intervention` (
   `teacher_id` bigint NOT NULL COMMENT '操作教师ID',
   `intervention_action` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '远程干预指令内容',
   `intervention_time` datetime DEFAULT NULL COMMENT '干预执行时间',
+  `is_read` tinyint NOT NULL DEFAULT '0' COMMENT '学生是否已读：0未读，1已读',
+  `read_time` datetime DEFAULT NULL COMMENT '学生查看时间',
   PRIMARY KEY (`intervention_id`),
   KEY `fk_intervention_session` (`session_id`),
   KEY `fk_intervention_teacher` (`teacher_id`),
   CONSTRAINT `fk_intervention_session` FOREIGN KEY (`session_id`) REFERENCES `training_session` (`session_id`),
   CONSTRAINT `fk_intervention_teacher` FOREIGN KEY (`teacher_id`) REFERENCES `sys_user` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='教师远程干预日志表';
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='教师远程干预日志表';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -190,7 +192,7 @@ CREATE TABLE `teacher_intervention` (
 
 LOCK TABLES `teacher_intervention` WRITE;
 /*!40000 ALTER TABLE `teacher_intervention` DISABLE KEYS */;
-INSERT INTO `teacher_intervention` VALUES (1,1,2,'请降低湿度并重新提交参数。','2026-05-27 14:51:35'),(2,1,2,'请重新调整发酵湿度，不用谢','2026-05-27 15:24:38'),(3,2,8,'请降低发酵湿度，并重新提交湿度参数。','2026-05-27 15:50:09'),(4,3,8,'蒸馏压力偏高，请检查阀门并降低加热强度。','2026-05-27 15:25:09'),(5,5,8,'请检查陈酿容器密封状态，确认后继续操作。','2026-05-27 16:05:09'),(6,5,2,'干预测试一下','2026-05-27 16:26:53');
+INSERT INTO `teacher_intervention` VALUES (1,1,2,'请降低湿度并重新提交参数。','2026-05-27 14:51:35',1,'2026-05-29 15:40:48'),(2,1,2,'请重新调整发酵湿度，不用谢','2026-05-27 15:24:38',1,'2026-05-29 15:40:49'),(3,2,8,'请降低发酵湿度，并重新提交湿度参数。','2026-05-27 15:50:09',0,NULL),(4,3,8,'蒸馏压力偏高，请检查阀门并降低加热强度。','2026-05-27 15:25:09',0,NULL),(5,5,8,'请检查陈酿容器密封状态，确认后继续操作。','2026-05-27 16:05:09',0,NULL),(6,5,2,'干预测试一下','2026-05-27 16:26:53',0,NULL),(7,5,2,'修正参数：pressure=85；指导话语：12321233','2026-05-29 09:29:26',0,NULL),(8,5,2,'修正参数：temperature=23，pressure=345；指导话语：123454321','2026-05-29 09:37:12',0,NULL),(9,1,2,'修正参数：pressure=0.101；指导话语：0.101','2026-05-29 10:58:59',1,'2026-05-29 15:40:50'),(10,1,2,'修正参数：temperature=111；指导话语：去微软推哦怕','2026-05-29 11:00:57',1,'2026-05-29 15:40:50'),(11,1,2,'修正参数：temperature=33；指导话语：温度过高了','2026-05-29 14:18:09',0,NULL),(12,1,2,'修正参数：duration=40；指导话语：时间','2026-05-29 15:10:55',1,'2026-05-29 15:40:52');
 /*!40000 ALTER TABLE `teacher_intervention` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -236,4 +238,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-28 10:14:01
+-- Dump completed on 2026-05-29 15:48:44
